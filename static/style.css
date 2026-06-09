@@ -1,0 +1,40 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    margin: 20px;
+}
+
+h1 {
+    text-align: center;
+}
+
+input, textarea {
+    width: 300px;
+    padding: 8px;
+    margin: 5px 0;
+}
+
+button {
+    padding: 8px 12px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#blogList {
+    padding: 0;
+}
+
+#blogList li {
+    list-style: none;
+    background: white;
+    margin: 15px 0;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+small {
+    color: gray;
+}
