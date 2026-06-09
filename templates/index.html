@@ -1,9 +1,338 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Blog Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>BlogPlatform</title>
 </head>
 <body>
-    <h1>Blog Platform is working!</h1>
-</body>
-</html>
+<h2>User Registration</h2>
+
+<input id="regUsername" placeholder="Username">
+<br><br>
+
+<input id="regPassword" type="password" placeholder="Password">
+<br><br>
+
+<button onclick="registerUser()">Register</button>
+
+<hr>
+
+<h2>User Login</h2>
+
+<input id="loginUsername" placeholder="Username">
+<br><br>
+
+<input id="loginPassword" type="password" placeholder="Password">
+<br><br>
+
+<button onclick="loginUser()">Login</button>
+
+<p id="loginMessage"></p>
+<p id="currentUser"></p>
+
+<button onclick="logoutUser()">
+    Logout
+</button>
+
+<hr>
+
+<hr>
+
+<h1>My Blog Platform</h1>
+
+<h2>Add Blog</h2>
+
+<input id="title" placeholder="Title">
+<br><br>
+
+<textarea id="content" placeholder="Content"></textarea>
+<br><br>
+
+<button onclick="addBlog()">Add Blog</button>
+
+<br><br>
+
+<input
+    type="text"
+    id="search"
+    placeholder="Search blogs..."
+    onkeyup="loadBlogs()">
+
+<br><br>
+
+<h2>Blogs</h2>
+
+<ul id="blogList"></ul>
+
+<script>
+
+const API = "/blogs";
+
+// ---------------- LOAD BLOGS ----------------
+async function registerUser() {
+
+    let username =
+        document.getElementById("regUsername").value;
+
+    let password =
+        document.getElementById("regPassword").value;
+
+    let res = await fetch(
+        "/register",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username,
+                password
+            })
+        }
+    );
+
+    let data = await res.json();
+
+    alert(data.message);
+}
+
+async function loginUser() {
+
+    let username =
+        document.getElementById("loginUsername").value;
+
+    let password =
+        document.getElementById("loginPassword").value;
+
+    let res = await fetch(
+        "/login",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username,
+                password
+            })
+        }
+    );
+
+    let data = await res.json();
+
+   document.getElementById("loginMessage")
+    .innerText = data.message;
+
+if (data.message === "Login successful") {
+
+    localStorage.setItem(
+        "loggedInUser",
+        username
+    );
+
+    document.getElementById("currentUser")
+        .innerText =
+        "Logged in as: " + username;
+}
+}
+
+async function loadBlogs() {
+
+    let res = await fetch(API);
+    let data = await res.json();
+
+    let searchText = document
+        .getElementById("search")
+        .value
+        .toLowerCase();
+
+    data = data.filter(blog =>
+        blog.title.toLowerCase().includes(searchText)
+    );
+
+    document.getElementById("blogList").innerHTML =
+        data.map(b =>
+            `<li>
+
+                <b>${b.title}</b> - ${b.content}
+
+                <br>
+
+                <small>Created: ${b.created_at}</small>
+
+                <br><br>
+
+                <input
+                    id="comment-${b.id}"
+                    placeholder="Write a comment">
+
+                <button onclick="addComment(${b.id})">
+                    Add Comment
+                </button>
+
+                <div id="comments-${b.id}"></div>
+
+                <br><br>
+
+               <button onclick="deleteBlog(${b.id})">
+                    Delete
+                </button>
+
+                <button onclick="editBlog(${b.id}, '${b.title}', '${b.content}')">
+                    Edit
+                </button>
+
+            </li>`
+        ).join("");
+
+    data.forEach(blog => {
+        loadComments(blog.id);
+    });
+}
+
+// ---------------- ADD BLOG ----------------
+async function addBlog() {
+
+    let user = localStorage.getItem("loggedInUser");
+
+    if (!user) {
+        alert("Please login first");
+        return;
+    }
+
+    let title = document.getElementById("title").value;
+    let content = document.getElementById("content").value;
+
+    await fetch(API, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            title,
+            content
+        })
+    });
+
+    loadBlogs();
+}
+
+
+
+// ---------------- DELETE BLOG ----------------
+
+async function deleteBlog(id) {
+
+    let confirmDelete =
+        confirm("Are you sure you want to delete this blog?");
+
+    if (!confirmDelete) {
+        return;
+    }
+
+    await fetch(`${API}/${id}`, {
+        method: "DELETE"
+    });
+
+    loadBlogs();
+}
+
+// ---------------- EDIT BLOG ----------------
+
+async function editBlog(id, oldTitle, oldContent) {
+
+    let title = prompt("Edit title", oldTitle);
+    let content = prompt("Edit content", oldContent);
+
+    if (title && content) {
+
+        await fetch(`${API}/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                title,
+                content
+            })
+        });
+
+        loadBlogs();
+    }
+}
+
+// ---------------- ADD COMMENT ----------------
+async function addComment(blogId) {
+
+     let user = localStorage.getItem("loggedInUser");
+
+    if (!user) {
+        alert("Please login first");
+        return;
+    }
+
+    let content =
+        document.getElementById(`comment-${blogId}`).value;
+
+    await fetch("/comments", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            content: content,
+            blog_id: blogId
+        })
+    });
+
+    loadComments(blogId);
+
+    document.getElementById(
+        `comment-${blogId}`
+    ).value = "";
+}
+
+// ---------------- LOAD COMMENTS ----------------
+
+async function loadComments(blogId) {
+
+    let res = await fetch(
+        `/comments/${blogId}`
+    );
+
+    let comments = await res.json();
+
+    document.getElementById(`comments-${blogId}`).innerHTML =
+        comments.map(c =>
+            `<p>💬 ${c.content}</p>`
+        ).join("");
+}
+
+function logoutUser() {
+
+    localStorage.removeItem(
+        "loggedInUser"
+    );
+
+    document.getElementById("currentUser")
+        .innerText = "";
+
+    document.getElementById("loginMessage")
+        .innerText = "Logged out";
+}
+let user =
+    localStorage.getItem("loggedInUser");
+
+if (user) {
+
+    document.getElementById("currentUser")
+        .innerText =
+        "Logged in as: " + user;
+}
+
+loadBlogs();
+
+</script>
+
+</body>   
+</html>                  now is it right? what to do next
