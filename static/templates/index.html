@@ -66,7 +66,7 @@
 
 <script>
 
-const API = "http://127.0.0.1:5000/blogs";
+const API = "/blogs";
 
 // ---------------- LOAD BLOGS ----------------
 async function registerUser() {
@@ -78,7 +78,7 @@ async function registerUser() {
         document.getElementById("regPassword").value;
 
     let res = await fetch(
-        "http://127.0.0.1:5000/register",
+        "/register",
         {
             method: "POST",
             headers: {
@@ -105,7 +105,7 @@ async function loginUser() {
         document.getElementById("loginPassword").value;
 
     let res = await fetch(
-        "http://127.0.0.1:5000/login",
+        "/login",
         {
             method: "POST",
             headers: {
@@ -274,7 +274,7 @@ async function addComment(blogId) {
     let content =
         document.getElementById(`comment-${blogId}`).value;
 
-    await fetch("http://127.0.0.1:5000/comments", {
+    await fetch("/comments", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -297,7 +297,7 @@ async function addComment(blogId) {
 async function loadComments(blogId) {
 
     let res = await fetch(
-        `http://127.0.0.1:5000/comments/${blogId}`
+        `/comments/${blogId}`
     );
 
     let comments = await res.json();
